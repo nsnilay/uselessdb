@@ -1,60 +1,35 @@
 package org.useless;
 
-import org.useless.core.store.KeyValueStore;
-import org.useless.core.store.SimpleInMemoryStore;
 import org.useless.server.Server;
 import org.useless.server.ServerFactory;
 
-/**
- * Main entry point for the UselessDB server.
- */
+//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
+// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
-    private static final int DEFAULT_PORT = 6379;  // Default Redis port for compatibility
-    private static Server server;
-    
     public static void main(String[] args) {
-        System.out.println("Starting UselessDB server...");
-        
+        // Create a thread pool server with 10 worker threads
+        Server server = ServerFactory.createServer(
+                ServerFactory.ServerType.THREAD_POOL,
+                8080,  // port
+                10     // max threads
+        );
+
+        // Add shutdown hook for graceful shutdown
+//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//            System.out.println("Shutting down server...");
+//            server.stop();
+//        }));
+
         try {
-            // Create a simple in-memory store
-            KeyValueStore store = new SimpleInMemoryStore();
-            
-            // Create server configuration
-            ServerFactory.ServerConfig config = new ServerFactory.ServerConfig()
-                .setMaxThreads(10)  // Number of threads in the thread pool
-                .setMaxConnections(100);  // Maximum number of concurrent connections
-            
-            // Create and start the server
-            server = ServerFactory.createServer(
-                Server.ServerType.THREAD_PER_REQUEST,
-                DEFAULT_PORT,
-                config,
-                store
-            );
-            
-            // Add shutdown hook to ensure clean shutdown
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("\nShutting down UselessDB server...");
-                try {
-                    if (server != null) {
-                        server.stop();
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error during shutdown: " + e.getMessage());
-                }
-            }));
-            
             // Start the server
             server.start();
-            
-            System.out.println("UselessDB server is running. Press Ctrl+C to stop.");
-            
+            System.out.println("Server started on port 8080. Press Ctrl+C to stop.");
+
             // Keep the main thread alive
-            Thread.currentThread().join();
-            
+//            Thread.currentThread().join();
         } catch (Exception e) {
-            System.err.println("Failed to start server: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Server error: " + e.getMessage());
+            server.stop();
             System.exit(1);
         }
     }
