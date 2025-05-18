@@ -52,7 +52,6 @@ public class ThreadPoolServer implements Server {
             serverSocket = new ServerSocket(port);
             threadPool = Executors.newFixedThreadPool(maxThreads, r -> {
                 Thread t = new Thread(r, "server-worker-" + System.currentTimeMillis());
-                t.setDaemon(true);
                 return t;
             });
 

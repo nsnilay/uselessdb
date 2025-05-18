@@ -11,7 +11,7 @@ public class Main {
         Server server = ServerFactory.createServer(
                 ServerFactory.ServerType.THREAD_POOL,
                 8080,  // port
-                10     // max threads
+                2     // max threads
         );
 
         // Add shutdown hook for graceful shutdown
