@@ -26,7 +26,11 @@ public class Main {
             System.out.println("Server started on port 8080. Press Ctrl+C to stop.");
 
             // Keep the main thread alive
-//            Thread.currentThread().join();
+            //In your ThreadPoolServer implementation, the thread pool's non-daemon threads keep the application alive
+            // even without the Thread.currentThread().join() call. This is why it appeared to work correctly.
+            //In contrast, the VirtualThreadServer's virtual threads are daemon threads, so they don't keep the
+            // application alive when the main thread exits.
+            Thread.currentThread().join();
         } catch (Exception e) {
             System.err.println("Server error: " + e.getMessage());
             server.stop();

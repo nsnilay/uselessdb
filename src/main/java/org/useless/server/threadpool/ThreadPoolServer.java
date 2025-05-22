@@ -1,27 +1,21 @@
 package org.useless.server.threadpool;
 
-import org.useless.core.store.Store;
-import org.useless.core.store.StoreManager;
-import org.useless.server.Server;
+import org.useless.server.AbstractServer;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A server implementation that uses a thread pool to handle client connections.
  */
-public class ThreadPoolServer implements Server {
-    private final int port;
+public class ThreadPoolServer extends AbstractServer {
     private final int maxThreads;
     private ServerSocket serverSocket;
     private ExecutorService threadPool;
-    private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private Thread serverThread;
-    private Store store;
 
     /**
      * Creates a new ThreadPoolServer.
@@ -31,15 +25,11 @@ public class ThreadPoolServer implements Server {
      * @throws IllegalArgumentException if port is invalid or maxThreads is not positive
      */
     public ThreadPoolServer(int port, int maxThreads) {
-        if (port < 0 || port > 65535) {
-            throw new IllegalArgumentException("Port must be between 0 and 65535");
-        }
+        super(port);
         if (maxThreads <= 0) {
             throw new IllegalArgumentException("Max threads must be positive");
         }
-        this.port = port;
         this.maxThreads = maxThreads;
-        store = StoreManager.getStore();
     }
 
     @Override
@@ -58,7 +48,6 @@ public class ThreadPoolServer implements Server {
             System.out.println("ThreadPoolServer started on port " + port + " with " + maxThreads + " threads");
 
             serverThread = new Thread(this::runServer, "server-acceptor");
-//            serverThread.setDaemon(true);
             serverThread.start();
             Thread.sleep(1000);
         } catch (Exception e) {
@@ -81,51 +70,6 @@ public class ThreadPoolServer implements Server {
             }
         } finally {
             stop();
-        }
-    }
-
-    private void handleClient(Socket socket) {
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
-
-            String line;
-            while ((line = in.readLine()) != null) {
-                String[] parts = line.trim().split("\\s+");
-                if (parts.length == 0) continue;
-
-                String response;
-                switch (parts[0].toUpperCase()) {
-                    case "SET":
-                        if (parts.length == 3) {
-                            store.put(parts[1], parts[2]);
-                            response = "OK";
-                        } else {
-                            response = "ERROR: Usage SET key value";
-                        }
-                        break;
-                    case "GET":
-                        if (parts.length == 2) {
-                            response = store.get(parts[1]).toString();
-                        } else {
-                            response = "ERROR: Usage GET key";
-                        }
-                        break;
-                    case "EXIT":
-                        response = "Bye!";
-                        out.write(response + "\n");
-                        out.flush();
-                        socket.close();
-                        return;
-                    default:
-                        response = "ERROR: Unknown command";
-                }
-
-                out.write(response + "\n");
-                out.flush();
-            }
-
-        } catch (IOException e) {
-            System.err.println("Client error: " + e.getMessage());
         }
     }
 
@@ -152,10 +96,5 @@ public class ThreadPoolServer implements Server {
         if (serverThread != null) {
             serverThread.interrupt();
         }
-    }
-
-    @Override
-    public boolean isRunning() {
-        return isRunning.get();
     }
 }

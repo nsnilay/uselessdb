@@ -16,7 +16,7 @@ public class SimpleKVStore<K, V> implements Store<K, V> {
     @Override
     public V get(K key) {
         if (!map.containsKey(key)) {
-            throw new NoSuchElementException();
+            return (V) "";
         }
 
         return map.get(key);
